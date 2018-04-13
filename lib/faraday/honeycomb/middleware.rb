@@ -1,6 +1,8 @@
 require 'faraday'
 require 'libhoney'
 
+require 'faraday/honeycomb/middleware'
+
 module Faraday
   module Honeycomb
     USER_AGENT_SUFFIX = "#{GEM_NAME}/#{VERSION}"
