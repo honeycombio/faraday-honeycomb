@@ -1,7 +1,7 @@
 require 'faraday'
 require 'libhoney'
 
-require 'faraday/honeycomb/middleware'
+require 'faraday/honeycomb/version'
 
 module Faraday
   module Honeycomb
