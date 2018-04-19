@@ -29,14 +29,18 @@ module Faraday
 
         response
       rescue Exception => e
-        event.add_field :exception_class, e.class
-        event.add_field :exception_message, e.message
+        if event
+          event.add_field :exception_class, e.class
+          event.add_field :exception_message, e.message
+        end
         raise
       ensure
-        finish = Time.now
-        duration = finish - start
-        event.add_field :duration_ms, duration * 1000
-        event.send
+        if start && event
+          finish = Time.now
+          duration = finish - start
+          event.add_field :duration_ms, duration * 1000
+          event.send
+        end
       end
     end
   end
