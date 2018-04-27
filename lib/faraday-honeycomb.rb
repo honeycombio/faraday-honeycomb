@@ -1,3 +1,6 @@
+# Main gem entrypoint (see also lib/faraday-honeycomb/automagic.rb for an
+# alternative entrypoint).
+
 require 'faraday/honeycomb/version'
 
 begin
