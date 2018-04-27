@@ -18,8 +18,8 @@ Gem::Specification.new do |gem|
 
 
   gem.add_dependency 'libhoney', '>= 1.5.0'
-  gem.add_dependency 'faraday', '>= 0.8.0'
 
+  gem.add_development_dependency 'faraday', ">= #{Faraday::Honeycomb::MIN_FARADAY_VERSION}"
   gem.add_development_dependency 'bump'
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
