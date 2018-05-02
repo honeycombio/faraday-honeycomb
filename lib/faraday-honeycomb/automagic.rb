@@ -4,10 +4,10 @@
 require 'faraday/honeycomb/version'
 
 begin
-  gem 'honeycomb'
+  gem 'honeycomb-beeline'
   gem 'faraday', ">= #{Faraday::Honeycomb::MIN_FARADAY_VERSION}"
 
-  require 'honeycomb/automagic'
+  require 'honeycomb-beeline/automagic'
   require 'faraday/honeycomb'
 
   Honeycomb.after_init :faraday do |client|
@@ -38,6 +38,6 @@ rescue Gem::LoadError => e
   when 'faraday'
       puts 'Not autoinitialising faraday-honeycomb'
   when 'honeycomb'
-    warn "Please ensure you `require 'faraday-honeycomb/automagic'` *after* `require 'honeycomb/automagic'`"
+    warn "Please ensure you `require 'faraday-honeycomb/automagic'` *after* `require 'honeycomb-beeline/automagic'`"
   end
 end
