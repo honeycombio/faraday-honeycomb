@@ -4,19 +4,18 @@ module Faraday
   module Honeycomb
     module AutoInstall
       class << self
-        def available?
+        def available?(**_)
           gem 'faraday', ">= #{::Faraday::Honeycomb::MIN_FARADAY_VERSION}"
         rescue Gem::LoadError
           false
         end
 
-        def auto_install!(honeycomb_client)
+        def auto_install!(honeycomb_client:, logger: nil)
           require 'faraday'
           require 'faraday-honeycomb'
 
           Faraday::Connection.extend(Module.new do
             define_method :new do |*args, &orig_block|
-              puts "Faraday overridden .new before super" # TODO
               block = if orig_block
                         proc do |b|
                           b.use :honeycomb, client: honeycomb_client
@@ -29,7 +28,6 @@ module Faraday
                         end
                       end
               super(*args, &block).tap do
-                puts "Faraday overridden .new after super" # TODO
               end
             end
           end)
