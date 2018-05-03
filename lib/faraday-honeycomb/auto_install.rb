@@ -15,12 +15,12 @@ module Faraday
           require 'faraday-honeycomb'
 
           Faraday::Connection.extend(Module.new do
-            define_method :new do |*args|
+            define_method :new do |*args, &orig_block|
               puts "Faraday overridden .new before super" # TODO
-              block = if block_given?
+              block = if orig_block
                         proc do |b|
                           b.use :honeycomb, client: honeycomb_client
-                          yield b
+                          orig_block.call(b)
                         end
                       else
                         proc do |b|
