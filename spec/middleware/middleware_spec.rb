@@ -41,7 +41,7 @@ RSpec.describe Faraday::Honeycomb::Middleware do
       path: '/',
       status: 200,
     )
-    expect(event.data[:duration_ms]).to be_a(Numeric)
+    expect(event.data[:durationMs]).to be_a(Numeric)
   end
 
   it 'records exception details if one was raised' do
