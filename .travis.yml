@@ -1,0 +1,14 @@
+language: ruby
+rvm:
+  - 2.2
+  - 2.3
+  - 2.4
+deploy:
+  provider: rubygems
+  api_key:
+    secure: A2r6s8Trbr5o7nYOAUIGc+7Ld+rQyDfM7Da0gPxT1FrHQRzuWiT1C8uN4i+Rm2bjHYeAJZNYglAngOkl3OK9M3n0BO0beEk6GipkNycWiYuAFE8FasDCaqgeI4M5cyHpklpGb1yUB8VetUqdPlUwRPZ8v2LbOHqmXWV/5/kX6X5INjpK+3i/2yvBfDVp7FOAJ1x7eUKxgzUNCng2s2OWkMPKj0iw7ln+PZg4kLBAQprRAnSmGEVdZ++yA794M9yylNoUJcN630dcRmWjEHY6GJUuE2TsVQPInmsPN9sO+W8jC7W6acCivCDh1j/v3sbmUGE2LPYutC7hxfjV/Mt/2FtS/DEg7EuHZIKA+Cic8Za9Q3WC0Can8pOI3Y3ZI0yGojOacR4kpk8/70NerL2oI3NRFidc9eqgnxropWJcPiwPvy7yHsu7J6ozXsLAL/ictErrlgJb8CUtP58ccCYJMQ8EUqk4CIkEnmjJKSrkgYah8bFOpp1doe3CVUNQGcO6brBuAd+EijzcmX0g55kg2Be09XvLIrnNTyFWREJ6W1zScSneMwt12cYYyDNwHWfuFIiwKcOpKJyJ3UyJ+FqcjKa2KX+CvXEna9/jxeYY2zG6dEJRLZkFBvt/l/4IRBC5t+8S+Z1uwKJD2gCCFoe3nTD9eQISjTmdyWaqATQCwhg=
+  gem: faraday-honeycomb
+  on:
+    tags: true
+    repo: honeycombio/faraday-honeycomb
+    ruby: '2.4'
