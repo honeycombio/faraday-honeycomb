@@ -10,43 +10,61 @@ module Faraday
 
     class Middleware
       def initialize(app, options = {})
-        @honeycomb = options[:client] || Libhoney::Client.new(options.merge(user_agent_addition: USER_AGENT_SUFFIX))
+        honeycomb = options[:client] || Libhoney::Client.new(options.merge(user_agent_addition: USER_AGENT_SUFFIX))
+        @builder = honeycomb.builder.
+          add(
+            'type' => 'http_client',
+            'meta.package' => 'faraday',
+            'meta.package_version' => Faraday::VERSION,
+          )
         @app = app
       end
 
       def call(env)
-        event = @honeycomb.event
+        event = @builder.event
 
-        event.add_field :url, env.url.to_s
-
-        event.add_field :protocol, env.url.scheme
-        event.add_field :host, env.url.host
-        event.add_field :path, env.url.path
+        add_request_fields(event, env)
 
         start = Time.now
         response = adding_span_metadata_if_available(event, env) do
           @app.call(env)
         end
 
-        event.add_field :status, response.status
+        add_response_fields(event, response)
 
         response
       rescue Exception => e
         if event
-          event.add_field :exception_class, e.class
-          event.add_field :exception_message, e.message
+          event.add_field 'request.error', e.class.name
+          event.add_field 'request.error_detail', e.message
         end
         raise
       ensure
         if start && event
           finish = Time.now
           duration = finish - start
-          event.add_field :durationMs, duration * 1000
+          event.add_field 'duration_ms', duration * 1000
           event.send
         end
       end
 
       private
+      def add_request_fields(event, env)
+        loud_method = env.method.upcase.to_s
+
+        event.add(
+          'name' => "#{loud_method} #{env.url.host}#{env.url.path}",
+          'request.method' => loud_method,
+          'request.protocol' => env.url.scheme,
+          'request.host' => env.url.host,
+          'request.path' => env.url.path,
+        )
+      end
+
+      def add_response_fields(event, response)
+        event.add_field 'response.status_code', response.status
+      end
+
       def adding_span_metadata_if_available(event, env)
         return yield unless defined?(::Honeycomb.trace_id)
 

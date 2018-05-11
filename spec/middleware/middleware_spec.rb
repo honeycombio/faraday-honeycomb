@@ -18,41 +18,68 @@ RSpec.describe Faraday::Honeycomb::Middleware do
       conn.use :honeycomb, client: fakehoney
       conn.adapter :test do |stub|
         stub.get('/') { [200, {}, 'hello'] }
-        stub.get('/slow') { raise Timeout::Error }
+        stub.get('/slow') { raise Timeout::Error, 'too slow' }
       end
     end
   end
 
-  def emitted_event
+  let(:emitted_event) do
     events = fakehoney.events
     expect(events.size).to eq(1)
     events[0]
   end
 
-  it 'sends an event when a request is made' do
-    response = faraday.get '/'
-    expect(response.status).to eq(200)
+  describe 'after the client makes a request' do
+    before do
+      response = faraday.get '/'
+      expect(response.status).to eq(200)
+    end
 
-    event = emitted_event
-    expect(event.data).to include(
-      url: 'http://example.com/',
-      protocol: 'http',
-      host: 'example.com',
-      path: '/',
-      status: 200,
-    )
-    expect(event.data[:durationMs]).to be_a(Numeric)
+    it 'sends an http_client event' do
+      expect(emitted_event.data).to include(
+        'type' => 'http_client',
+        'name' => 'GET example.com/',
+      )
+    end
+
+    it 'includes basic request and response fields' do
+      expect(emitted_event.data).to include(
+        'request.method' => 'GET',
+        'request.protocol' => 'http',
+        'request.host' => 'example.com',
+        'request.path' => '/',
+        'response.status_code' => 200,
+      )
+    end
+
+    it 'records how long the request took' do
+      expect(emitted_event.data).to include('duration_ms')
+      expect(emitted_event.data['duration_ms']).to be_a Numeric
+    end
+
+    it 'includes meta fields in the event' do
+      expect(emitted_event.data).to include(
+        'meta.package' => 'faraday',
+        'meta.package_version' => Faraday::VERSION,
+      )
+    end
   end
 
-  it 'records exception details if one was raised' do
-    expect(->{
-      faraday.get '/slow'
-    }).to raise_error(Timeout::Error)
+  describe 'if the client raised an exception' do
+    before do
+      expect { faraday.get '/slow' }.to raise_error(Timeout::Error)
+    end
 
-    event = emitted_event
-    expect(event.data).to include(
-      exception_class: Timeout::Error,
-      exception_message: 'Timeout::Error',
-    )
+    it 'records exception details' do
+      expect(emitted_event.data).to include(
+        'request.error' => 'Timeout::Error',
+        'request.error_detail' => 'too slow',
+      )
+    end
+
+    it 'still records how long the request took' do
+      expect(emitted_event.data).to include('duration_ms')
+      expect(emitted_event.data['duration_ms']).to be_a Numeric
+    end
   end
 end
