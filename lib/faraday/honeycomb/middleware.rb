@@ -9,8 +9,20 @@ module Faraday
     USER_AGENT_SUFFIX = "#{GEM_NAME}/#{VERSION}"
 
     class Middleware
-      def initialize(app, options = {})
-        honeycomb = options[:client] || Libhoney::Client.new(options.merge(user_agent_addition: USER_AGENT_SUFFIX))
+      def initialize(app, client: nil, logger: nil)
+        @logger = logger
+        @logger ||= ::Honeycomb.logger if defined?(::Honeycomb.logger)
+
+        honeycomb = if client
+          debug "initialized with #{client.class.name} via :client option"
+          client
+        elsif defined?(::Honeycomb.client)
+          debug "initialized with #{::Honeycomb.client.class.name} from honeycomb-beeline"
+          ::Honeycomb.client
+        else
+          debug "initializing new Libhoney::Client"
+          Libhoney::Client.new(options.merge(user_agent_addition: USER_AGENT_SUFFIX))
+        end
         @builder = honeycomb.builder.
           add(
             'type' => 'http_client',
@@ -49,6 +61,10 @@ module Faraday
       end
 
       private
+      def debug(msg)
+        @logger.debug("#{self.class.name}: #{msg}") if @logger
+      end
+
       def add_request_fields(event, env)
         loud_method = env.method.upcase.to_s
 

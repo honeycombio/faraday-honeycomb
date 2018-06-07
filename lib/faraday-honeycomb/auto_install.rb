@@ -23,13 +23,13 @@ module Faraday
               block = if orig_block
                 proc do |b|
                   logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new{}" if logger
-                  b.use :honeycomb, client: honeycomb_client
+                  b.use :honeycomb, client: honeycomb_client, logger: logger
                   orig_block.call(b)
                 end
               else
                 proc do |b|
                   logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new" if logger
-                  b.use :honeycomb, client: honeycomb_client
+                  b.use :honeycomb, client: honeycomb_client, logger: logger
                   b.adapter Faraday.default_adapter
                 end
               end
