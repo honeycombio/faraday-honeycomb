@@ -54,7 +54,7 @@ RSpec.describe Faraday::Honeycomb::Middleware do
 
     it 'records how long the request took' do
       expect(emitted_event.data).to include('duration_ms')
-      expect(emitted_event.data['duration_ms']).to be_a Numeric
+      expect(emitted_event.data['duration_ms']).to be > 0
     end
 
     it 'includes meta fields in the event' do
