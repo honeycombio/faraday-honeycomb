@@ -90,10 +90,17 @@ module Faraday
         span_id = SecureRandom.uuid
         event.add_field 'trace.span_id', span_id
 
+        add_trace_context_header(env, trace_id, span_id) if trace_id
+
         ::Honeycomb.with_span_id(span_id) do |parent_span_id|
           event.add_field 'trace.parent_id', parent_span_id
           yield
         end
+      end
+
+      def add_trace_context_header(env, trace_id, span_id)
+        encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, hypothetical_example_of_context: 'TODO')
+        env.request_headers['X-Honeycomb-Trace'] = encoded_context
       end
     end
   end
