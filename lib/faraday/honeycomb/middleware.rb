@@ -25,7 +25,6 @@ module Faraday
         end
         @builder = honeycomb.builder.
           add(
-            'type' => 'http_client',
             'meta.package' => 'faraday',
             'meta.package_version' => Faraday::VERSION,
           )
@@ -38,7 +37,7 @@ module Faraday
         add_request_fields(event, env)
 
         start = Time.now
-        response = adding_span_metadata_if_available(event, env) do
+        response = with_tracing_if_available(event, env) do
           @app.call(env)
         end
 
@@ -66,11 +65,8 @@ module Faraday
       end
 
       def add_request_fields(event, env)
-        loud_method = env.method.upcase.to_s
-
         event.add(
-          'name' => "#{loud_method} #{env.url.host}#{env.url.path}",
-          'request.method' => loud_method,
+          'request.method' => loud_method(env),
           'request.protocol' => env.url.scheme,
           'request.host' => env.url.host,
           'request.path' => env.url.path,
@@ -81,25 +77,23 @@ module Faraday
         event.add_field 'response.status_code', response.status
       end
 
-      def adding_span_metadata_if_available(event, env)
-        return yield unless defined?(::Honeycomb.trace_id)
+      def loud_method(env)
+        env.method.upcase.to_s
+      end
 
-        trace_id = ::Honeycomb.trace_id
+      def with_tracing_if_available(event, env)
+        return yield unless defined?(::Honeycomb::Beeline::VERSION)
 
-        event.add_field 'trace.trace_id', trace_id if trace_id
-        span_id = SecureRandom.uuid
-        event.add_field 'trace.span_id', span_id
+        name = "#{loud_method(env)} #{env.url.host}#{env.url.path}"
 
-        add_trace_context_header(env, trace_id, span_id) if trace_id
-
-        ::Honeycomb.with_span_id(span_id) do |parent_span_id|
-          event.add_field 'trace.parent_id', parent_span_id
+        ::Honeycomb.span_for_existing_event event, name: name, type: 'http_client' do |span_id, trace_id|
+          add_trace_context_header(env, trace_id, span_id)
           yield
         end
       end
 
       def add_trace_context_header(env, trace_id, span_id)
-        encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, hypothetical_example_of_context: 'TODO')
+        encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, **::Honeycomb.active_trace_context)
         env.request_headers['X-Honeycomb-Trace'] = encoded_context
       end
     end

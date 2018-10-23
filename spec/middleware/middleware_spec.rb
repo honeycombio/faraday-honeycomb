@@ -35,13 +35,6 @@ RSpec.describe Faraday::Honeycomb::Middleware do
       expect(response.status).to eq(200)
     end
 
-    it 'sends an http_client event' do
-      expect(emitted_event.data).to include(
-        'type' => 'http_client',
-        'name' => 'GET example.com/',
-      )
-    end
-
     it 'includes basic request and response fields' do
       expect(emitted_event.data).to include(
         'request.method' => 'GET',
