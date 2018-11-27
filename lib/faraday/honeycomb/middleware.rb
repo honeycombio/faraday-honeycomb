@@ -25,6 +25,7 @@ module Faraday
         end
         @builder = honeycomb.builder.
           add(
+            'type' => 'http_client',
             'meta.package' => 'faraday',
             'meta.package_version' => Faraday::VERSION,
           )
@@ -65,8 +66,10 @@ module Faraday
       end
 
       def add_request_fields(event, env)
+        loud_method = loud_method(env)
         event.add(
-          'request.method' => loud_method(env),
+          'name' => "#{loud_method} #{env.url.host}#{env.url.path}",
+          'request.method' => loud_method,
           'request.protocol' => env.url.scheme,
           'request.host' => env.url.host,
           'request.path' => env.url.path,
