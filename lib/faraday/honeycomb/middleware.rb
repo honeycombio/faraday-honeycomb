@@ -25,6 +25,7 @@ module Faraday
         end
         @builder = honeycomb.builder.
           add(
+            'type' => 'http_client',
             'meta.package' => 'faraday',
             'meta.package_version' => Faraday::VERSION,
           )
@@ -65,8 +66,10 @@ module Faraday
       end
 
       def add_request_fields(event, env)
+        loud_method = loud_method(env)
         event.add(
-          'request.method' => loud_method(env),
+          'name' => "#{loud_method} #{env.url.host}#{env.url.path}",
+          'request.method' => loud_method,
           'request.protocol' => env.url.scheme,
           'request.host' => env.url.host,
           'request.path' => env.url.path,
@@ -82,19 +85,38 @@ module Faraday
       end
 
       def with_tracing_if_available(event, env)
-        return yield unless defined?(::Honeycomb::Beeline::VERSION)
+        # return if we are not using the ruby beeline
+        return yield unless defined?(::Honeycomb)
 
-        name = "#{loud_method(env)} #{env.url.host}#{env.url.path}"
+        # beeline version <= 0.5.0
+        if ::Honeycomb.respond_to? :trace_id
+          trace_id = ::Honeycomb.trace_id
+          event.add_field 'trace.trace_id', trace_id if trace_id
+          span_id = SecureRandom.uuid
+          event.add_field 'trace.span_id', span_id
 
-        ::Honeycomb.span_for_existing_event event, name: name, type: 'http_client' do |span_id, trace_id|
-          add_trace_context_header(env, trace_id, span_id)
+          ::Honeycomb.with_span_id(span_id) do |parent_span_id|
+            event.add_field 'trace.parent_id', parent_span_id
+            yield
+          end
+        # beeline version > 0.5.0
+        elsif ::Honeycomb.respond_to? :span_for_existing_event
+          ::Honeycomb.span_for_existing_event event, name: nil, type: 'http_client' do |span_id, trace_id|
+            add_trace_context_header(env, trace_id, span_id)
+            yield
+          end
+        # fallback if we don't detect any known beeline tracing methods
+        else
           yield
         end
       end
 
       def add_trace_context_header(env, trace_id, span_id)
-        encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, **::Honeycomb.active_trace_context)
-        env.request_headers['X-Honeycomb-Trace'] = encoded_context
+        # beeline version > 0.5.0
+        if ::Honeycomb.respond_to? :encode_trace_context
+          encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, **::Honeycomb.active_trace_context)
+          env.request_headers['X-Honeycomb-Trace'] = encoded_context
+        end
       end
     end
   end
