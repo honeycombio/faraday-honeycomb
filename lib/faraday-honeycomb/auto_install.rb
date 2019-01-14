@@ -30,6 +30,7 @@ module Faraday
                 proc do |b|
                   logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new" if logger
                   b.use :honeycomb, client: honeycomb_client, logger: logger
+                  b.request :url_encoded
                   b.adapter Faraday.default_adapter
                 end
               end
