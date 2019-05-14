@@ -20,21 +20,32 @@ module Faraday
 
           Faraday::Connection.extend(Module.new do
             define_method :new do |*args, &orig_block|
-              block = if orig_block
-                proc do |b|
+              if original_args = args.first
+                if original_args.respond_to? :key
+                  builder = original_args["builder"] || original_args[:builder]
+                end
+              end
+              case
+              when builder
+                logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new{}" if logger
+                builder.insert(0, ::Faraday::Honeycomb::Middleware, client: honeycomb_client, logger: logger)
+                super(*args, &orig_block)
+              when orig_block
+                block = proc do |b|
                   logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new{}" if logger
                   b.use :honeycomb, client: honeycomb_client, logger: logger
                   orig_block.call(b)
                 end
+                super(*args, &block)
               else
-                proc do |b|
+                block = proc do |b|
                   logger.debug "Adding Faraday::Honeycomb::Middleware in #{self}.new" if logger
                   b.use :honeycomb, client: honeycomb_client, logger: logger
                   b.request :url_encoded
                   b.adapter Faraday.default_adapter
                 end
-              end
               super(*args, &block)
+              end
             end
           end)
         end
