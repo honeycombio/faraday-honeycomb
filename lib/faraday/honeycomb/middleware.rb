@@ -114,7 +114,7 @@ module Faraday
       def add_trace_context_header(env, trace_id, span_id)
         # beeline version > 0.5.0
         if ::Honeycomb.respond_to? :encode_trace_context
-          encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, **::Honeycomb.active_trace_context)
+          encoded_context = ::Honeycomb.encode_trace_context(trace_id, span_id, ::Honeycomb.active_trace_context)
           env.request_headers['X-Honeycomb-Trace'] = encoded_context
         end
       end
