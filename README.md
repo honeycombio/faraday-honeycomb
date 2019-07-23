@@ -1,3 +1,5 @@
+# **DEPRECATION NOTICE**: This gem is deprecated, please use [honeycomb-beeline](https://github.com/honeycombio/beeline-ruby) instead
+
 # Honeycomb Tracing for Faraday
 
 [![Build Status](https://travis-ci.org/honeycombio/faraday-honeycomb.svg?branch=master)](https://travis-ci.org/honeycombio/faraday-honeycomb)
@@ -20,11 +22,3 @@ Faraday 0.8 or later
 Please reach out to [support@honeycomb.io](mailto:support@honeycomb.io) or ping
 us with the chat bubble on [our website](https://www.honeycomb.io) for any
 assistance. We also welcome [bug reports](https://github.com/honeycombio/faraday-honeycomb/issues).
-
-## Contributions
-
-Features, bug fixes and other changes to `faraday-honeycomb` are gladly accepted. Please
-open issues or a pull request with your change. Remember to add your name to the
-CONTRIBUTORS file!
-
-All contributions will be released under the Apache License 2.0.
